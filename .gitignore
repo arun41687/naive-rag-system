@@ -1,0 +1,46 @@
+# Environment
+.venv/
+venv/
+ENV/
+env/
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+rag_index/
+*.faiss
+chunks.json
+evaluation_results.json
+*.pdf
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data
+data/
+downloads/
+*.csv
+*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
