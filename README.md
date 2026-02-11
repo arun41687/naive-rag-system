@@ -35,7 +35,7 @@ Answer + Sources
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.8+ (Tested on Python 3.10)
 - CUDA/GPU (recommended for Ollama, CPU also works but slower)
 - 4GB+ RAM for embeddings, 8GB+ for LLM
 
