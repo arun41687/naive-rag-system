@@ -7,7 +7,7 @@ A Retrieval-Augmented Generation (RAG) system for answering complex questions ab
 ✅ **Document Ingestion**: Parse PDF documents with semantic chunking  
 ✅ **Vector Search**: Efficient similarity search using FAISS  
 ✅ **Re-ranking**: Cross-encoder based re-ranking for higher relevance  
-✅ **Open-Source LLM**: Mistral 7B via Ollama (no API keys needed)  
+✅ **Open-Source LLM**: Phi3 via Ollama (no API keys needed)  
 ✅ **Source Citation**: Accurate citations with document names and page numbers  
 ✅ **Out-of-Scope Handling**: Intelligent filtering of unanswerable questions  
 ✅ **Cloud-Ready**: Fully runnable on Kaggle/Colab notebooks  
@@ -27,7 +27,7 @@ FAISS Retrieval (Top-15)
     ↓
 Cross-Encoder Re-ranking (Top-5)
     ↓
-LLM (Mistral 7B) + Custom Prompt
+LLM (Phi3) + Custom Prompt
     ↓
 Answer + Sources
 ```
@@ -38,6 +38,9 @@ Answer + Sources
 - Python 3.8+ (Tested on Python 3.10)
 - CUDA/GPU (recommended for Ollama, CPU also works but slower)
 - 4GB+ RAM for embeddings, 8GB+ for LLM
+
+- Local: Python 3.10
+- Kaggle: Python 3.12 (use requirements_kaggle.txt)
 
 ### Setup
 
@@ -55,12 +58,13 @@ Answer + Sources
 
 3. **Install dependencies**:
    ```bash
-   pip install -r requirements.txt
+   pip install -r requirements.txt (local, for python 3.10)
+   pip install -r requirements_kaggle.txt (kaggle, for python 3.12)
    ```
 
 4. **Download Ollama** (for LLM):
    - Visit https://ollama.ai/ and install Ollama
-   - Pull Mistral model: `ollama pull mistral`
+   - Pull Phi3 model: `ollama pull phi3`
 
 5. **Place PDF documents** in the project root:
    - `10-Q4-2024-As-Filed.pdf` (Apple 10-K)
@@ -91,7 +95,7 @@ python main.py --help
 **Options**:
 - `--mode {index,query,evaluate}`: Operation mode (default: evaluate)
 - `--query TEXT`: Question to answer (required for query mode)
-- `--model MODEL`: LLM model name (default: mistral)
+- `--model MODEL`: LLM model name (default: phi3)
 - `--embedding-model MODEL`: Embedding model (default: all-MiniLM-L6-v2)
 - `--index-dir PATH`: Directory for saving/loading index (default: ./rag_index)
 
@@ -118,7 +122,7 @@ python main.py --mode evaluate
 from rag_system import RAGSystem
 
 # Initialize
-rag = RAGSystem(model_name="mistral", use_reranker=True)
+rag = RAGSystem(model_name="phi3", use_reranker=True)
 
 # Ingest documents
 documents = [
@@ -206,9 +210,9 @@ Answers are returned in JSON format:
    ```bash
    !curl https://ollama.ai/install.sh | sh
    ```
-5. **Pull Mistral model**:
+5. **Pull phi3 model**:
    ```bash
-   !ollama pull mistral &
+   !ollama pull phi3 &
    ```
 6. **Run RAG system**:
    ```bash
@@ -259,7 +263,7 @@ naive_rag/
 **Solution**: 
 - Ensure Ollama is installed and running
 - On Colab: Start Ollama service with `!ollama serve &`
-- Check if Mistral model is pulled: `ollama pull mistral`
+- Check if phi3 model is pulled: `ollama pull phi3`
 
 ### Issue: Slow embedding generation
 **Solution**:
@@ -321,4 +325,4 @@ For issues, questions, or suggestions:
 
 ---
 
-**Built with**: Sentence-Transformers • FAISS • Ollama • Mistral • LangChain
+**Built with**: Sentence-Transformers • FAISS • Ollama • phi3 • LangChain
