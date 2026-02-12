@@ -55,7 +55,7 @@ class RAGPrompt:
 class LLMIntegration:
     """Integrates LLM with RAG pipeline."""
     
-    def __init__(self, model_name: str = "mistral", temperature: float = 0.3):
+    def __init__(self, model_name: str = "phi3", temperature: float = 0.3):
         """
         Initialize LLM integration.
         

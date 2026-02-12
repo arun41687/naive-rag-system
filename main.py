@@ -13,7 +13,7 @@ def main():
     parser.add_argument("--mode", choices=["index", "query", "evaluate"], default="evaluate",
                        help="Mode of operation")
     parser.add_argument("--query", type=str, help="Query for query mode")
-    parser.add_argument("--model", type=str, default="mistral", help="LLM model name")
+    parser.add_argument("--model", type=str, default="phi3", help="LLM model name")
     parser.add_argument("--embedding-model", type=str, default="all-MiniLM-L6-v2",
                        help="Embedding model name")
     parser.add_argument("--index-dir", type=str, default="./rag_index",
