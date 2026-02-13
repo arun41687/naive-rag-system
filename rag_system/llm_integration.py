@@ -3,7 +3,8 @@
 from typing import List, Dict
 # from langchain_community.llms import Ollama
 from langchain_ollama import OllamaLLM
-from langchain.prompts import PromptTemplate
+# from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain.chains import LLMChain
 
 class RAGPrompt:
