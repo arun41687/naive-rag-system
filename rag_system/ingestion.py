@@ -43,8 +43,11 @@ class DocumentIngestor:
 
             # Determine page number
             page_num = 1
+            chunk_start = i
+            chunk_end = min(i + self.chunk_size, len(full_text))
+            
             for (start, end), page in page_mapping.items():
-                if start <= i < end:
+                if chunk_start < end and chunk_end > start:  # Overlap check
                     page_num = page
                     break
 
@@ -100,6 +103,10 @@ class VectorStore:
     def search(self, query: str, k: int = 5) -> List[Tuple[Dict, float]]:
         if self.index is None:
             raise ValueError("Vector index not initialized. Add chunks first.")
+            return []
+        
+        # Ensure k doesn't exceed available chunks
+        k = min(k, len(self.chunks))
 
         query_embedding = self.model.encode(
             [query],
