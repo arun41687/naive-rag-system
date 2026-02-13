@@ -3,6 +3,7 @@
 from typing import List, Tuple, Dict
 from sentence_transformers import CrossEncoder
 from rag_system.ingestion import VectorStore
+import torch
 
 class RetrieverWithReranker:
     """Retrieves and re-ranks relevant chunks."""
@@ -19,9 +20,12 @@ class RetrieverWithReranker:
         self.use_reranker = use_reranker
         
         if use_reranker:
-            # Cross-encoder for better ranking
-            # self.reranker = CrossEncoder("cross-encoder/mmarco-MiniLMv2-L12-H384")
-            self.reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+            # Cross-encoder for better ranking           
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            self.reranker = CrossEncoder(
+                "cross-encoder/ms-marco-MiniLM-L-6-v2",
+                device=device
+            )
     
     def retrieve(self, query: str, top_k: int = 5, rerank: bool = True) -> List[Dict]:
         """
@@ -42,7 +46,7 @@ class RetrieverWithReranker:
         if rerank and self.use_reranker:
             # Re-rank using cross-encoder
             chunks = [r[0] for r in results]
-            texts = [r[0]["text"] for r in results]
+            texts = [r[0].get("text", "") for r in results]
             
             # Compute cross-encoder scores
             scores = self.reranker.predict([[query, text] for text in texts])
@@ -78,6 +82,6 @@ class RetrieverWithReranker:
         sources = []
         for chunk in chunks:
             sources.append(
-                f"{chunk['document']}, p. {chunk['page']}"
+                f"{chunk.get('document', 'UnknownDoc')}, p. {chunk.get('page', 'N/A')}"
             )
         return list(set(sources))  # Remove duplicates
