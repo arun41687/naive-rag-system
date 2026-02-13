@@ -177,3 +177,48 @@ class RAGSystem:
         self.vector_store.load(save_dir)
         self.indexed = True
         print(f"Index loaded from {save_dir}")
+
+def run_evaluation(rag_system: RAGSystem) -> List[Dict]: 
+    """Run the evaluation on all test questions. 
+    Returns: List of answer dictionaries with question_id, answer, and sources 
+    """ 
+    questions = [ {"question_id": 1, "question": "What was Apples total revenue for the fiscal year ended September 28, 2024?"}, 
+                 {"question_id": 2, "question": "How many shares of common stock were issued and outstanding as of October 18, 2024?"}, 
+                 {"question_id": 3, "question": "What is the total amount of term debt (current + non-current) reported by Apple as of September 28, 2024?"}, 
+                 {"question_id": 4, "question": "On what date was Apples 10-K report for 2024 signed and filed with the SEC?"}, 
+                 {"question_id": 5, "question": "Does Apple have any unresolved staff comments from the SEC as of this filing? How do you know?"}, 
+                 {"question_id": 6, "question": "What was Teslas total revenue for the year ended December 31, 2023?"}, 
+                 {"question_id": 7, "question": "What percentage of Teslas total revenue in 2023 came from Automotive Sales (excluding Leasing)?"}, 
+                 {"question_id": 8, "question": "What is the primary reason Tesla states for being highly dependent on Elon Musk?"}, 
+                 {"question_id": 9, "question": "What types of vehicles does Tesla currently produce and deliver?"}, 
+                 {"question_id": 10, "question": "What is the purpose of Teslas 'lease pass-through fund arrangements'?"}, 
+                 {"question_id": 11, "question": "What is Teslas stock price forecast for 2025?"}, 
+                 {"question_id": 12, "question": "Who is the CFO of Apple as of 2025?"}, 
+                 {"question_id": 13, "question": "What color is Teslas headquarters painted?"} ] 
+    
+    answers = [] 
+    print("\n" + "="*80) 
+    print("RUNNING EVALUATION ON 13 TEST QUESTIONS") 
+    print("="*80 + "\n") 
+    
+    for q_data in questions: 
+        print(f"Q{q_data['question_id']}: {q_data['question']}") 
+        result = rag_system.answer_question(q_data['question']) 
+        answer_entry = { "question_id": q_data['question_id'], "answer": result['answer'], "sources": result['sources'] } 
+        answers.append(answer_entry) 
+        print(f"Answer: {result['answer'][:100]}...") 
+        print(f"Sources: {result['sources']}\n")
+
+    # Save results with timestamp 
+    from datetime import datetime 
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") 
+    output_file = f"evaluation_results_{timestamp}.json"
+    
+    with open(output_file, "w") as f: 
+        json.dump(answers, f, indent=2) 
+    
+    print("\n" + "="*80) 
+    print(f"Evaluation complete! Results saved to {output_file}") 
+    print("="*80) 
+    
+    return answers
