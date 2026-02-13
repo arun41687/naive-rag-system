@@ -39,42 +39,53 @@ class RetrieverWithReranker:
         Returns:
             List of relevant chunks with scores
         """
-        # Initial retrieval with more candidates for re-ranking
-        initial_k = top_k * 3 if rerank and self.use_reranker else top_k
-        results = self.vector_store.search(query, k=initial_k)
+        try:
+            if not query.strip():
+                return []
+            
+            # Validate vector store has data
+            if self.vector_store.index is None or len(self.vector_store.chunks) == 0:
+                return []
         
-        if rerank and self.use_reranker:
-            # Re-rank using cross-encoder
-            chunks = [r[0] for r in results]
-            texts = [r[0].get("text", "") for r in results]
+            # Initial retrieval with more candidates for re-ranking
+            initial_k = top_k * 3 if rerank and self.use_reranker else top_k
+            results = self.vector_store.search(query, k=initial_k)
             
-            # Compute cross-encoder scores
-            scores = self.reranker.predict([[query, text] for text in texts])
-            
-            # Sort by cross-encoder scores (higher is better)
-            ranked = sorted(
-                zip(chunks, scores),
-                key=lambda x: x[1],
-                reverse=True
-            )
-            
-            # Return top_k
-            return [
-                {
-                    **chunk,
-                    "score": float(score)
-                }
-                for chunk, score in ranked[:top_k]
-            ]
-        else:
-            # Return results sorted by distance
-            return [
-                {
-                    **result[0],
-                    "score": 1.0 / (1.0 + result[1])  # Convert distance to similarity
-                }
-                for result in results[:top_k]
-            ]
+            if rerank and self.use_reranker:
+                # Re-rank using cross-encoder
+                chunks = [r[0] for r in results]
+                texts = [r[0].get("text", "") for r in results]
+                
+                # Compute cross-encoder scores
+                scores = self.reranker.predict([[query, text] for text in texts])
+                
+                # Sort by cross-encoder scores (higher is better)
+                ranked = sorted(
+                    zip(chunks, scores),
+                    key=lambda x: x[1],
+                    reverse=True
+                )
+                
+                # Return top_k
+                return [
+                    {
+                        **chunk,
+                        "score": float(score)
+                    }
+                    for chunk, score in ranked[:top_k]
+                ]
+            else:
+                # Return results sorted by distance
+                return [
+                    {
+                        **result[0],
+                        "score": float(result[1])   # Convert distance to similarity
+                    }
+                    for result in results[:top_k]
+                ]
+        except Exception as e:
+            print(f"Error during retrieval: {e}")
+            return []
     
     @staticmethod
     def format_sources(chunks: List[Dict]) -> List[str]:
