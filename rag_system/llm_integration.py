@@ -55,36 +55,14 @@ class RAGPrompt:
 class LLMIntegration:
     """Integrates LLM with RAG pipeline."""
     
-    def __init__(self, model_name: str = "phi3", temperature: float = 0.3):
-        """
-        Initialize LLM integration.
-        
-        Args:
-            model_name: Name of the Ollama model to use
-            temperature: Temperature for generation (0-1)
-        """
-        self.model_name = model_name
+    def __init__(self, model_name: str = "microsoft/Phi-3-mini-4k-instruct", temperature: float = 0.3):
         self.temperature = temperature
-        
-        # Initialize LLM
-        self.llm = HFLLM(model_name)  # HF model interface
-    
+        self.llm = HFLLM(model_name)
+
     def generate_answer(self, query: str, context: str) -> str:
-        """
-        Generate an answer using the LLM.
-        
-        Args:
-            query: User's question
-            context: Retrieved context
-            
-        Returns:
-            Generated answer
-        """
         prompt = RAGPrompt.create_answer_prompt(query, context)
-        
-        try:            
-            response = self.llm.generate(prompt)
-            return response.strip()
+        try:
+            return self.llm.generate(prompt).strip()
         except Exception as e:
             print(f"Error generating answer: {e}")
             return "Unable to generate answer at this time."
