@@ -1,8 +1,7 @@
 """LLM integration module (Kaggle-compatible, no LangChain, no Ollama)."""
 
-from typing import List, Dict
+from typing import List, Dict, Any
 
-from celery import chunks
 from rag_system.hf_llm import HFLLM
 
 
@@ -91,8 +90,7 @@ class LLMIntegration:
             # Generate response
             response = self.llm.generate(
                 prompt, 
-                max_tokens=self.max_tokens,
-                temperature=self.temperature
+                max_tokens=self.max_tokens
             )
             
             return response.strip() if response else "Unable to generate a response."
@@ -101,7 +99,7 @@ class LLMIntegration:
             print(f"Error generating answer: {e}")
             return "Unable to generate answer at this time."
     
-    def generate_with_sources(self, query: str, chunks: List[Dict]) -> Dict[str, any]:
+    def generate_with_sources(self, query: str, chunks: List[Dict]) -> Dict[str, Any]:
         """Generate answer with source information."""
         answer = self.generate_answer(query, chunks)
         
