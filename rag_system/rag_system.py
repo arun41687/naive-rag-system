@@ -119,14 +119,9 @@ class RAGSystem:
         retrieved_chunks = retrieved_chunks[:5]
 
         # ------------------------------------------------
-        # STEP 3: Format context
+        # STEP 3: Generate answer (HF Phi-3)
         # ------------------------------------------------
-        context = RAGPrompt.format_context(retrieved_chunks)
-
-        # ------------------------------------------------
-        # STEP 4: Generate answer (HF Phi-3)
-        # ------------------------------------------------
-        answer = self.llm.generate_answer(query, context)
+        answer = self.llm.generate_answer(query, retrieved_chunks)
 
         # ------------------------------------------------
         # STEP 5: Extract sources
@@ -213,7 +208,7 @@ def run_evaluation(rag_system: RAGSystem) -> List[Dict]:
     from datetime import datetime 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S") 
     output_file = f"evaluation_results_{timestamp}.json"
-    
+
     with open(output_file, "w") as f: 
         json.dump(answers, f, indent=2) 
     
