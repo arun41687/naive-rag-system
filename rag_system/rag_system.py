@@ -19,23 +19,40 @@ class RAGSystem:
         chunk_overlap: int = 50,
         use_reranker: bool = True
     ):
-        """
-        Initialize the RAG system.
-        """
 
+        print("Initializing RAG System...")
+
+        self.use_reranker = use_reranker
+
+        # ------------------------------
+        # Document ingestion
+        # ------------------------------
         self.ingestor = DocumentIngestor(
             chunk_size=chunk_size,
             overlap=chunk_overlap
         )
 
+        # ------------------------------
+        # Vector store (FAISS)
+        # ------------------------------
         self.vector_store = VectorStore(model_name=embedding_model)
 
+        # ------------------------------
+        # Retriever WITH reranker
+        # ------------------------------
         self.retriever = RetrieverWithReranker(
             self.vector_store,
-            use_reranker=use_reranker
+            use_reranker=self.use_reranker
         )
 
-        # HF-based LLM (NO Ollama)
+        if self.use_reranker:
+            print("Reranker ENABLED")
+        else:
+            print("Reranker DISABLED")
+
+        # ------------------------------
+        # HF LLM
+        # ------------------------------
         self.llm = LLMIntegration(model_name=model_name)
 
         self.indexed = False
@@ -81,11 +98,13 @@ class RAGSystem:
                 "sources": []
             }
 
-        # Retrieve relevant chunks
+        # ------------------------------------------------
+        # STEP 1: Vector Retrieval (Top 10 initial)
+        # ------------------------------------------------
         retrieved_chunks = self.retriever.retrieve(
-            query,
-            top_k=5,
-            rerank=True
+            query=query,
+            top_k=10,                 # retrieve more initially
+            rerank=self.use_reranker  # force reranker usage
         )
 
         if not retrieved_chunks:
@@ -94,13 +113,24 @@ class RAGSystem:
                 "sources": []
             }
 
-        # Format context
+        # ------------------------------------------------
+        # STEP 2: Keep top 5 after reranking
+        # ------------------------------------------------
+        retrieved_chunks = retrieved_chunks[:5]
+
+        # ------------------------------------------------
+        # STEP 3: Format context
+        # ------------------------------------------------
         context = RAGPrompt.format_context(retrieved_chunks)
 
-        # Generate answer using HF Phi-3
+        # ------------------------------------------------
+        # STEP 4: Generate answer (HF Phi-3)
+        # ------------------------------------------------
         answer = self.llm.generate_answer(query, context)
 
-        # Extract sources
+        # ------------------------------------------------
+        # STEP 5: Extract sources
+        # ------------------------------------------------
         sources = self.retriever.format_sources(retrieved_chunks)
 
         return {
@@ -132,10 +162,7 @@ class RAGSystem:
 
         query_lower = query.lower()
 
-        if any(keyword in query_lower for keyword in out_of_scope_keywords):
-            return True
-
-        return False
+        return any(keyword in query_lower for keyword in out_of_scope_keywords)
 
     # ------------------------------------------------------------
     # SAVE / LOAD INDEX
@@ -150,55 +177,3 @@ class RAGSystem:
         self.vector_store.load(save_dir)
         self.indexed = True
         print(f"Index loaded from {save_dir}")
-
-
-# ------------------------------------------------------------------
-# EVALUATION
-# ------------------------------------------------------------------
-
-def run_evaluation(rag_system: RAGSystem) -> None:
-
-    questions = [
-        {"question_id": 1, "question": "What was Apples total revenue for the fiscal year ended September 28, 2024?"},
-        {"question_id": 2, "question": "How many shares of common stock were issued and outstanding as of October 18, 2024?"},
-        {"question_id": 3, "question": "What is the total amount of term debt (current + non-current) reported by Apple as of September 28, 2024?"},
-        {"question_id": 4, "question": "On what date was Apples 10-K report for 2024 signed and filed with the SEC?"},
-        {"question_id": 5, "question": "Does Apple have any unresolved staff comments from the SEC as of this filing?"},
-        {"question_id": 6, "question": "What was Teslas total revenue for the year ended December 31, 2023?"},
-        {"question_id": 7, "question": "What percentage of Teslas total revenue in 2023 came from Automotive Sales (excluding Leasing)?"},
-        {"question_id": 8, "question": "What is the primary reason Tesla states for being highly dependent on Elon Musk?"},
-        {"question_id": 9, "question": "What types of vehicles does Tesla currently produce and deliver?"},
-        {"question_id": 10, "question": "What is the purpose of Teslas 'lease pass-through fund arrangements'?"},
-        {"question_id": 11, "question": "What is Teslas stock price forecast for 2025?"},
-        {"question_id": 12, "question": "Who is the CFO of Apple as of 2025?"},
-        {"question_id": 13, "question": "What color is Teslas headquarters painted?"}
-    ]
-
-    answers = []
-
-    print("\n" + "="*80)
-    print("RUNNING EVALUATION")
-    print("="*80 + "\n")
-
-    for q_data in questions:
-        print(f"Q{q_data['question_id']}: {q_data['question']}")
-
-        result = rag_system.answer_question(q_data['question'])
-
-        answers.append({
-            "question_id": q_data['question_id'],
-            "answer": result["answer"],
-            "sources": result["sources"]
-        })
-
-        print(f"Answer: {result['answer'][:120]}...")
-        print(f"Sources: {result['sources']}\n")
-
-    with open("evaluation_results.json", "w") as f:
-        json.dump(answers, f, indent=2)
-
-    print("="*80)
-    print("Evaluation complete! Results saved to evaluation_results.json")
-    print("="*80)
-
-    return answers
