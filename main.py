@@ -1,35 +1,42 @@
-"""Main script to run the RAG system."""
+"""
+Main script to run the RAG system (Kaggle Compatible).
+Uses HuggingFace Phi-3-mini-4k-instruct.
+No LangChain.
+"""
 
 import os
-import sys
-import argparse
 from pathlib import Path
 from rag_system import RAGSystem, run_evaluation
 
+
+# ==============================
+# CONFIGURATION (EDIT HERE)
+# ==============================
+
+MODE = "evaluate"   # "index" | "query" | "evaluate"
+QUERY = "What was Apple's revenue in 2024?"
+
+MODEL_NAME = "microsoft/Phi-3-mini-4k-instruct"
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+
+INDEX_DIR = "./rag_index"
+
+
+# ==============================
+# MAIN EXECUTION
+# ==============================
+
 def main():
-    """Main function to orchestrate the RAG system."""
-    
-    parser = argparse.ArgumentParser(description="RAG System for SEC filing analysis")
-    parser.add_argument("--mode", choices=["index", "query", "evaluate"], default="evaluate",
-                       help="Mode of operation")
-    parser.add_argument("--query", type=str, help="Query for query mode")
-    parser.add_argument("--model", type=str, default="phi3", help="LLM model name")
-    parser.add_argument("--embedding-model", type=str, default="all-MiniLM-L6-v2",
-                       help="Embedding model name")
-    parser.add_argument("--index-dir", type=str, default="./rag_index",
-                       help="Directory for saving/loading index")
-    
-    args = parser.parse_args()
-    
-    # Initialize RAG system
-    print("Initializing RAG system...")
+
+    print("Initializing RAG system (HF Phi-3)...")
+
     rag = RAGSystem(
-        model_name=args.model,
-        embedding_model=args.embedding_model,
-        use_reranker=True
+        model_name=MODEL_NAME,
+        embedding_model=EMBEDDING_MODEL,
+        use_reranker=False   # safer for Kaggle
     )
-    
-    # Define documents
+
+    # Documents (ensure PDFs are uploaded to Kaggle)
     documents = [
         {
             "path": "10-Q4-2024-As-Filed.pdf",
@@ -40,57 +47,62 @@ def main():
             "name": "Tesla 10-K"
         }
     ]
-    
-    # Check if documents exist
+
     for doc in documents:
         if not os.path.exists(doc["path"]):
             print(f"Warning: {doc['path']} not found")
-    
-    if args.mode == "index":
-        # Index mode
+
+    # ==============================
+    # INDEX MODE
+    # ==============================
+
+    if MODE == "index":
         print("\nMode: Index and save")
+
         rag.ingest_documents(documents)
-        rag.save_index(args.index_dir)
-        print(f"Index saved to {args.index_dir}")
-        
-    elif args.mode == "query":
-        # Query mode
+        rag.save_index(INDEX_DIR)
+
+        print(f"Index saved to {INDEX_DIR}")
+
+    # ==============================
+    # QUERY MODE
+    # ==============================
+
+    elif MODE == "query":
         print("\nMode: Query")
-        if not args.query:
-            print("Error: --query required for query mode")
-            sys.exit(1)
-        
-        # Load index if it exists
-        if os.path.exists(args.index_dir):
-            rag.load_index(args.index_dir)
+
+        if os.path.exists(INDEX_DIR):
+            rag.load_index(INDEX_DIR)
         else:
-            print("Index not found. Indexing documents...")
+            print("Index not found. Creating index...")
             rag.ingest_documents(documents)
-            rag.save_index(args.index_dir)
-        
-        # Answer the query
-        result = rag.answer_question(args.query)
-        print(f"\nQuestion: {args.query}")
-        print(f"Answer: {result['answer']}")
-        print(f"Sources: {result['sources']}")
-        
-    elif args.mode == "evaluate":
-        # Evaluation mode (default)
-        print("\nMode: Evaluate (answer all 13 test questions)")
-        
-        # Load index if it exists
-        if os.path.exists(args.index_dir):
-            print(f"Loading index from {args.index_dir}...")
-            rag.load_index(args.index_dir)
+            rag.save_index(INDEX_DIR)
+
+        result = rag.answer_question(QUERY)
+
+        print(f"\nQuestion: {QUERY}")
+        print(f"\nAnswer:\n{result['answer']}")
+        print(f"\nSources:\n{result['sources']}")
+
+    # ==============================
+    # EVALUATION MODE
+    # ==============================
+
+    elif MODE == "evaluate":
+        print("\nMode: Evaluate (All test questions)")
+
+        if os.path.exists(INDEX_DIR):
+            print(f"Loading index from {INDEX_DIR}...")
+            rag.load_index(INDEX_DIR)
         else:
-            print("Index not found. Indexing documents...")
+            print("Index not found. Creating index...")
             rag.ingest_documents(documents)
-            rag.save_index(args.index_dir)
-        
-        # Run evaluation
+            rag.save_index(INDEX_DIR)
+
         results = run_evaluation(rag)
-        
+
         return results
+
 
 if __name__ == "__main__":
     main()
