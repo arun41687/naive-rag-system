@@ -1,8 +1,7 @@
 """LLM integration module."""
 
 from typing import List, Dict
-# from langchain_community.llms import Ollama
-from langchain_ollama import OllamaLLM
+from rag_system.hf_llm import HFLLM  # import a custom HF LLM wrapper
 # from langchain.prompts import PromptTemplate
 from langchain_core.prompts import PromptTemplate
 from langchain.chains import LLMChain
@@ -67,14 +66,8 @@ class LLMIntegration:
         self.model_name = model_name
         self.temperature = temperature
         
-        # Initialize Ollama LLM
-        self.llm = OllamaLLM(
-            model=model_name,
-            temperature=temperature,
-            top_p=0.9,
-            top_k=40,
-            num_predict= None
-        )
+        # Initialize LLM
+        self.llm = HFLLM(model_name)  # HF model interface
     
     def generate_answer(self, query: str, context: str) -> str:
         """
@@ -89,9 +82,8 @@ class LLMIntegration:
         """
         prompt = RAGPrompt.create_answer_prompt(query, context)
         
-        try:
-            # response = self.llm(prompt)
-            response = self.llm.invoke(prompt)
+        try:            
+            response = self.llm.generate(prompt)
             return response.strip()
         except Exception as e:
             print(f"Error generating answer: {e}")
