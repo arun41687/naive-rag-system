@@ -33,7 +33,7 @@ def main():
     rag = RAGSystem(
         model_name=MODEL_NAME,
         embedding_model=EMBEDDING_MODEL,
-        use_reranker=False   # safer for Kaggle
+        use_reranker=True # required
     )
 
     # Documents (ensure PDFs are uploaded to Kaggle)
